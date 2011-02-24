@@ -1,0 +1,13 @@
+clean=Remove any temporary products.
+clobber=Remove any generated file.
+clobber_rdoc=Remove rdoc products
+doc=
+doc/rdoc=
+doc/rdoc/index.html=
+pkg\:clean=Clean the build dir
+pkg\:rawr\:add_files=Add files conf,image ...
+pkg\:rawr\:bundle_jar=create gems bundle pacakage
+rdoc=Build the rdoc HTML Files
+rerdoc=Force a rebuild of the RDOC files
+spec=Run RSpec code examples
+test=Run tests

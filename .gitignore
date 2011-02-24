@@ -1,0 +1,5 @@
+*.DS_Store
+sources/sample_app/.bundle
+sources/sample_app/build
+sources/sample_app/lib/ruby
+sources/sample_app/dist
