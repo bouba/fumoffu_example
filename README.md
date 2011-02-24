@@ -7,6 +7,8 @@ The following sample has been setup with [Netbeans][nb]
 
 # Description
 
+You can get sources of the framework [here](http://github.com/bouba/fumoffu)
+
 ## Application setup after installation
 
 _NB: To run rawr tasks (used to download the embedded jruby-complete.jar and package the application) for now you need to edit the Rakefile_   
