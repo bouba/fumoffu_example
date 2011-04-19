@@ -1,7 +1,7 @@
 source "http://rubygems.org"
 
 platforms :jruby do
-  #gem "fumoffu"
+  gem "fumoffu", :path => "/Users/bouba/Development/Workspace/fumoffu"
   group :development do
     gem "jruby-openssl"
   end

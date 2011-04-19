@@ -7,24 +7,54 @@ The following sample has been setup with [Netbeans][nb]
 
 # Description
 
-You can get sources of the framework [here](http://github.com/bouba/fumoffu)
+You can get sources of the framework [here](http://github.com/bouba/fumoffu) 
 
-## Application setup after installation
+The following step will describe the step taken to setup a new application. 
 
-_NB: To run rawr tasks (used to download the embedded jruby-complete.jar and package the application) for now you need to edit the Rakefile_   
+## Step 1: Generate the application skeleton
 
-After generating the application skeleton, I configured the following files:
+Open a terminal and use the following command line to generate the skeleton 
 
-      build_configuration.rb
+      fumoffu -i your_app_name 
 
-**Implementing the Java layer**  
+This will generate the skeleton and retrieve the bundle dependencies for packaging
+of your application.
 
-* * * 
-Setup the Java part of your project and design the UI using your IDE tools.  
+NB: All bundle gems are located in the ./engine/lib/ruby folder we need to download
+them in order to be able to compile them in a jar when we package the application. Note
+that not all gem will be able to compile with JRuby (some may require 'adjustement' so 
+it may compile and be used).
 
-**Do not forget to add the libraries located in the lib/java folder including jruby-complete.jar**.  
+## Step 2: Retrieving JRuby jar
 
-NB: When adding the Swing Object and Container I recommand setting their names, which will it easier for us to identified them.  
+In order to use JRuby when we package our application we need to retrieve the a JRuby jar
+You may use the following command line in order to check if your application has the
+dependency: 
+
+        fumoffu -d 
+
+You do not have it just follow the instruction given by the command line.
+
+## Step 3: Setting up the Interface
+
+In fumoffu, the default interface framework used is Java Swing. If you want to use other Java framework 
+you may want to change the configuration information in the "build_configuration" file. To import your
+framework JAR when packaging the application. 
+
+This step mainly depends on the IDE you use to create your application interface. 
+When you setup your interface project just make sure that your files are references are: 
+
+* sources   => *your_project_path/interface/src* 
+* test      => *your_project_path/interface/test*
+* lib       => *your_project_path/interface/lib*
+* resources => *your_project_path/interface/resources*
+
+*resources* may be media, video anything resources needed by your interface.
+
+
+## Step 4: Implementing the interface
+
+In your interface MainView.
 
 Make sure to add a constructor that takes an ActionManager:
 
@@ -41,52 +71,63 @@ The ActionManager is what enables the interaction between JRuby and Java. To del
           this.am.handleAction(evt, UIActions.SAMPLE_ACTION, this);
       }
 
+_Make sure to generate the jar of your UI so we may import it in JRuby engine project._ 
 
-**Implementing the JRuby layer**  
-
-* * * 
+## Step 5: Setting up the Engine
 
 The JRuby layer contain the heart of your application. 
 
 The key here is to generate a jar of your JAVA UI which will be used by the JRuby project part.  
-Once I generate a jar of the Java UI, I include the jar in the classpath (and dependencies) to the JRuby project compiler in order to sync both project.
+Once Java UI jar is generated,include the jar in the classpath (and dependencies) to the JRuby project compiler in order to sync both project.
 
-In order to use the Java class in your UI layer you need to make a declare the classes, to do edit the java\_classes file in the 
+In order to use the Java class in your UI layer you need to declare the classes in the java\_classes file located in the 
 config folder:
 
-      # src/ruby/config/config/initializers/java_classes
+      # engine/config/initializers/java_classes.rb
       # ================================
       # IMPORT ALL JAVA CLASS USED IN THE PROJECT
+      # This is the UI Jar
+      # require  '/path/to/UI/MyApp.jar'
 
       # Mandatory Classes
       include_class 'org.github.bouba.fumoffu.UIActions'
       include_class 'org.github.bouba.fumoffu.ActionManager'
 
-      include_class 'com.sample.app.ui.MainView'
+      include_class 'com.sample.app.MainView'
 
 
-Then in order to process the actions I create a handler and a controller.  
+Then in order to process the actions create a handler and a controller.  
+
+* * *
 In Fumoffu there is 2 level to process the action:  
 
-> 1) The handler layer is used to extract the incoming, delegate the processing to the controller and if required update the Java view. It the only
+> 1) The handler layer is used to extract the incoming, delegate the processing to the controller and if required update the Java view. It is the only
 > layer that interact directly with the Java layer.
 > 
 > 2) The controller layer is used to process actions
+* * *
 
-So my next step consist on creating and configure the application to recognize my newly introduced class
+To create the controller and handler you may use the following rake task:
+
+        rake fumoffu:generate:controller[controller_name]
+        rake fumoffu:generate:handler[controller_name]
+
+## Step 6: Implementing the Engine
+
+In order to implement the engine you need to implement the handlers and the controllers:
       
-      # FILE#1 src/ruby/app/actions/controllers/sample_action_controller.rb 
+      # FILE#1 engine/src/actions/controllers/sample_action_controller.rb 
       class SampleActionController < ApplicationController
         def say_hello
-          "Hello"
+          "Hello JRuby !"
         end
       end
       
-      # FILE#2 src/ruby/app/actions/handlers/sample_action_handler.rb
+      # FILE#2 engine/src/actions/handlers/sample_action_handler.rb
       class SampleActionHandler < Fumoffu::Handler
         def initialize
           super
-          @controllers[UIActions::SAMPLE_ACTION] = SampleActionController.new
+          @controller = SampleActionController.new
         end
 
         def handleAction evt, action, caller
@@ -95,12 +136,14 @@ So my next step consist on creating and configure the application to recognize m
             component = component_by_name evt.getSource, "mainPanel"
             label     = component_child_by_name component, "myLabel"
 
-            label.setText @controllers[UIActions::SAMPLE_ACTION].say_hello
+            label.setText @controller.say_hello
+            return true
           end
+          return false
         end
       end
 
-      # FILE#3 src/ruby/app/actions/handlers/application_handler.rb
+      # FILE#3 engine/src/actions/handlers/application_handler.rb
       class ApplicationHandler < ActionManager
         def initialize
           @handlers = Array.new
@@ -110,7 +153,7 @@ So my next step consist on creating and configure the application to recognize m
       end
       
       
-      # FILE#4 src/ruby/config/config/initializers/app_classes
+      # FILE#4 engine/config/initializers/app_classes
       ....
       def import_from_jar
         #  Example
@@ -143,24 +186,8 @@ In order to package your application, the first step is to make a jar of all the
 To do so use the following command line in your app (projects/sources/sampleapp in this example) folder:
 
 
-      bundle install lib/ruby
-      rake pkg:rawr:bundle_jar
-      rake rawr:jar
-      rake rawr:bundle_app
-
-
-_NB: since fumoffu is still not in rubygems you will need create the gem and copy the gem folder in lib/ruby manually, I am still new to the create my own gem  but I'll clean things up as soon as I can_
-
-
-## Directory structure
-
-* netbeans\_wksp  
-  _Netbeans workspace_  
-* sources         
-  _Include all the projects sources_  
-
-  * sample\_app  
-  _The sources of the application that implement the fumoffu infrastructure_
+      rake fumoffu:bundler:jar 
+      fumoffu -b app 
 
 [nb]: http://www.netbeans.com/downloads/index.html "[Netbeans][nb]"
 [jruby]: http://jruby.org/download "[JRuby][jruby]"  

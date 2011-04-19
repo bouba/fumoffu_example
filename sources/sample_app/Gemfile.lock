@@ -1,10 +1,17 @@
+PATH
+  remote: /Users/bouba/Development/Workspace/fumoffu
+  specs:
+    fumoffu (0.1.0)
+      bundler (~> 1.0.10)
+      jruby-openssl
+
 GEM
   remote: http://rubygems.org/
   specs:
     bouncy-castle-java (1.5.0145.2)
     builder (3.0.0)
     diff-lcs (1.1.2)
-    hoe (2.9.1)
+    hoe (2.9.4)
       rake (>= 0.8.7)
     jruby-openssl (0.7.3)
       bouncy-castle-java
@@ -27,12 +34,13 @@ GEM
       builder (>= 2.1.2)
       s4t-utils (>= 1.0.3)
       xml-simple (>= 1.0.11)
-    xml-simple (1.0.14)
+    xml-simple (1.0.15)
 
 PLATFORMS
   java
 
 DEPENDENCIES
+  fumoffu!
   jruby-openssl
   rawr
   rspec (>= 2.4.0)
